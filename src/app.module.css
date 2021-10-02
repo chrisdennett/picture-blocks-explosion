@@ -1,0 +1,19 @@
+html {
+  min-height: 100vh;
+  font-family: "Roboto", sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  background-image: url("./images/cuttingMat.png");
+}
+
+canvas {
+  max-height: 100vh;
+  display: block;
+  margin: auto;
+}

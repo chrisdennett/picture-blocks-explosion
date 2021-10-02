@@ -1,0 +1,24 @@
+.quickPhotoSelector{
+    position: relative;
+}
+
+.quickPhotoSelector label{
+    /*font-family: 'Alegreya Sans', sans-serif;*/
+    font: 400 13.3333px Arial;
+}
+
+.quickPhotoSelector--input{
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.quickPhotoSelector--customInputButton{
+    /* cursor: pointer; */
+    margin-top: 10px;
+    outline: none;
+    text-align: center;
+}
