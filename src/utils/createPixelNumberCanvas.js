@@ -57,37 +57,13 @@ export const createPixelPortraitBlocks = (inputCanvas, settings) => {
 
 // PORTRAIT CANVAS
 export const createPixelPortraitCanvas = (inputCanvas, settings) => {
-  const {
-    blockSize = 30,
-    palette,
-    paperSize,
-    showAsFinishedPortrait,
-    explodeOuterBlocks,
-    explosionLevel,
-    multiplier,
-    useRotation,
-    backgroundColour,
-  } = settings;
-
   const { blocks, blocksPerImageWidth, blocksPerImageHeight } =
     createPixelPortraitBlocks(inputCanvas, settings);
-
-  let pixelType = "square";
 
   const blockCanvas = createCanvasFromBlocks(blocks, {
     blocksPerImageWidth,
     blocksPerImageHeight,
-    blockSize,
-    palette,
-    showAsFinishedPortrait,
-    paperSize,
-    pixelType,
-    backgroundColour,
-    showColourOnSheets: true,
-    explodeOuterBlocks,
-    explosionLevel,
-    multiplier,
-    useRotation,
+    ...settings,
   });
 
   return { canvas: blockCanvas };
@@ -130,6 +106,9 @@ export const createCanvasFromBlocks = (blocks, options) => {
     backgroundColour,
     palette,
     sheetLabel,
+    minExplodeDistance,
+    explodeFromX,
+    explodeFromY,
   } = options;
 
   const outputCanvas = document.createElement("canvas");
@@ -137,6 +116,8 @@ export const createCanvasFromBlocks = (blocks, options) => {
   const outHeight = canvasHeight
     ? canvasHeight
     : blocksPerImageHeight * blockSize;
+
+  console.log("minExplodeDistance: ", minExplodeDistance);
 
   outputCanvas.width = outWidth;
   outputCanvas.height = outHeight;
@@ -149,6 +130,10 @@ export const createCanvasFromBlocks = (blocks, options) => {
 
   let x, y, i;
 
+  // explodeFromX: NumberParam,
+  // explodeFromY: NumberParam,
+  // minExplodeDistance: NumberParam,
+
   const explosionCenterPt = {
     x: Math.round(outWidth / 2),
     y: Math.round(outHeight / 2),
@@ -160,8 +145,8 @@ export const createCanvasFromBlocks = (blocks, options) => {
     outWidth,
     outHeight
   );
-  const minDiagonalFrac = 0.37;
-  const minDiagonalDistanceToEffect = maxDiagonalDistance * minDiagonalFrac;
+
+  const minDiagonalDistanceToEffect = maxDiagonalDistance * minExplodeDistance;
 
   for (i = 0; i < blocks.length; i++) {
     x = i % blocksPerImageWidth;
