@@ -8,13 +8,13 @@ import {
 } from "use-query-params";
 import { useHistory } from "react-router";
 
-const defaultValsPath = `?backgroundColour=rgb%28255%2C%20255%2C%20255%2C%201%29&baseColour=%23862c1c&blockSize=7&brightnessAdjust=0&contrast=0&cropBottom=1&cropLeft=0&cropRight=1&cropTop=0&explodeFromX=0.5&explodeFromY=0.5&explodeOuterBlocks=1&explosionLevel=10&minExplodeDistance=0.5&multiplier=0.7&pixelsWide=242&removeLightestColour=0&totalColours=10&useRotation=1`;
+const defaultValsPath = `?backgroundColour=rgb%28255%2C%20255%2C%20255%2C%201%29&baseColour=%23862c1c&blockSize=7&brightnessAdjust=0&contrast=0&cropBottom=1&cropLeft=0&cropRight=1&cropTop=0&explodeFromX=0.48&explodeFromY=0.61&explodeOuterBlocks=1&explosionLevel=72&minExplodeDistance=0.19&multiplier=0.1&pixelsWide=135&removeLightestColour=0&totalColours=10&useRandom=1&useRotation=1`;
 
 export default function Controls({ showControls = true, onChange }) {
   const [query, setQuery] = useQueryParams({
     explodeOuterBlocks: BooleanParam,
-    removeLightestColour: BooleanParam,
     useRotation: BooleanParam,
+    useRandom: BooleanParam,
     baseColour: StringParam,
     backgroundColour: StringParam,
     blockSize: NumberParam,
@@ -65,11 +65,6 @@ export default function Controls({ showControls = true, onChange }) {
           min: 1,
           max: 50,
           onChange: (value) => setQuery({ totalColours: value }),
-        },
-
-        removeLightestColour: {
-          value: false,
-          onChange: (value) => setQuery({ removeLightestColour: value }),
         },
 
         baseColour: {
@@ -162,7 +157,7 @@ export default function Controls({ showControls = true, onChange }) {
         multiplier: {
           value: 0.7,
           min: 0.1,
-          max: 5,
+          max: 100,
           onChange: (value) => setQuery({ multiplier: value }),
           render: (get) => get("explosionEffect.explodeOuterBlocks") === true,
         },
@@ -170,6 +165,12 @@ export default function Controls({ showControls = true, onChange }) {
         useRotation: {
           value: true,
           onChange: (value) => setQuery({ useRotation: value }),
+          render: (get) => get("explosionEffect.explodeOuterBlocks") === true,
+        },
+
+        useRandom: {
+          value: true,
+          onChange: (value) => setQuery({ useRandom: value }),
           render: (get) => get("explosionEffect.explodeOuterBlocks") === true,
         },
       },

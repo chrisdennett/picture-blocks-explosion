@@ -105,7 +105,6 @@ export const createCanvasFromBlocks = (blocks, options) => {
     blockSize = 10,
     backgroundColour,
     palette,
-    sheetLabel,
     minExplodeDistance,
     explodeFromX,
     explodeFromY,
@@ -236,17 +235,16 @@ const drawBlock = ({
   directionX,
   fractionDistanceFromCenterY,
   directionY,
-  useRandom = false,
+  useRandom = true,
 }) => {
   let xPos = left;
   let yPos = top;
   let rotation = 0;
 
   if (explodeOuterBlocks) {
-    const rand = Math.random();
+    const randMultiplier = useRandom ? Math.random() : 1;
     if (useRotation) {
       rotation = explosionLevel * fractionDistanceFromCenterY * 45;
-      if (useRandom) rotation *= rand;
     }
 
     const maxOffset = blockSize * explosionLevel;
@@ -254,13 +252,13 @@ const drawBlock = ({
     if (fractionDistanceFromCenterX > 0) {
       const multiplyBy = fractionDistanceFromCenterX * multiplier;
       const offsetX = maxOffset * (fractionDistanceFromCenterX * multiplyBy);
-      xPos += offsetX * directionX;
+      xPos += offsetX * directionX * randMultiplier;
     }
 
     if (fractionDistanceFromCenterY > 0) {
       const multiplyBy = fractionDistanceFromCenterY * multiplier;
       const offsetY = maxOffset * (fractionDistanceFromCenterY * multiplyBy);
-      yPos += offsetY * directionY;
+      yPos += offsetY * directionY * randMultiplier;
     }
   }
 
