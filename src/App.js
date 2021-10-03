@@ -28,8 +28,6 @@ const App = () => {
     if (!params.blockSize) return;
     let newSettings = { ...params };
 
-    console.log("newSettings: ", newSettings);
-
     // combine crop data
     newSettings.crop = {
       left: params.cropLeft,

@@ -117,8 +117,6 @@ export const createCanvasFromBlocks = (blocks, options) => {
     ? canvasHeight
     : blocksPerImageHeight * blockSize;
 
-  console.log("minExplodeDistance: ", minExplodeDistance);
-
   outputCanvas.width = outWidth;
   outputCanvas.height = outHeight;
 
@@ -135,18 +133,17 @@ export const createCanvasFromBlocks = (blocks, options) => {
   // minExplodeDistance: NumberParam,
 
   const explosionCenterPt = {
-    x: Math.round(outWidth / 2),
-    y: Math.round(outHeight / 2),
+    x: Math.round(explodeFromX * outWidth),
+    y: Math.round(explodeFromY * outHeight),
   };
 
-  const maxDiagonalDistance = getDistance(
+  // max dist is either from 0 to center x or from center x to width.
+  const minExplodeRadius = minExplodeDistance * outWidth;
+  const maxExplodeRadius = Math.max(
     explosionCenterPt.x,
-    explosionCenterPt.y,
-    outWidth,
-    outHeight
+    outWidth - explosionCenterPt.x
   );
-
-  const minDiagonalDistanceToEffect = maxDiagonalDistance * minExplodeDistance;
+  const maxExplodeDistance = maxExplodeRadius - minExplodeRadius;
 
   for (i = 0; i < blocks.length; i++) {
     x = i % blocksPerImageWidth;
@@ -155,23 +152,43 @@ export const createCanvasFromBlocks = (blocks, options) => {
     let left = x * blockSize;
     let top = y * blockSize;
 
-    const actualFromCenter = getDistance(
+    const diagonalDistanceToCenter = getDistance(
       left,
       top,
       explosionCenterPt.x,
       explosionCenterPt.y
     );
-    // let distFromCenter = 0;
-    let distFromCenter = { x: 0, y: 0, diagonal: 0 };
-    if (actualFromCenter > minDiagonalDistanceToEffect) {
-      distFromCenter.diagonal =
-        (actualFromCenter - minDiagonalDistanceToEffect) /
-        (maxDiagonalDistance - minDiagonalDistanceToEffect);
-    }
 
-    let offsetDirection = { x: 1, y: 1 };
-    if (left < explosionCenterPt.x) offsetDirection.x = -1;
-    if (top < explosionCenterPt.y) offsetDirection.y = -1;
+    const { x: xOnMinCircle, y: yOnMinCircle } = getPtOnCircle(
+      explosionCenterPt,
+      minExplodeRadius,
+      { x: left, y: top }
+    );
+
+    const { x: distanceFromMinCircleX, y: distanceFromMinCircleY } =
+      getDistancesBetweenPoints(
+        { x: left, y: top },
+        { x: xOnMinCircle, y: yOnMinCircle }
+      );
+
+    let directionX = 0;
+    let fractionDistanceFromCenterX = 0;
+
+    let directionY = 0;
+    let fractionDistanceFromCenterY = 0;
+
+    // if block's outside the minExplodeRadius
+    if (diagonalDistanceToCenter > minExplodeRadius) {
+      // everything in here is outside the min circle
+      // increase the x and y based on distance from min circle
+
+      // fractions used to increasingly increase the distance as you get further away
+      fractionDistanceFromCenterX = distanceFromMinCircleX / maxExplodeDistance;
+      fractionDistanceFromCenterY = distanceFromMinCircleY / maxExplodeDistance;
+
+      directionX = left - explosionCenterPt.x < 0 ? -1 : 1;
+      directionY = top - explosionCenterPt.y < 0 ? -1 : 1;
+    }
 
     const blockTypeIndex = blocks[i];
     if (blockTypeIndex >= 0) {
@@ -187,41 +204,19 @@ export const createCanvasFromBlocks = (blocks, options) => {
         ${swatch.lightness}%
         )`;
 
-      const label =
-        palette.labels && palette.labels[blockTypeIndex]
-          ? palette.labels[blockTypeIndex]
-          : null;
-
       drawBlock({
         outputCtx,
         left,
         top,
         blockColour,
-        label,
         blockTypeIndex,
-        distFromCenter,
-        offsetDirection,
+        fractionDistanceFromCenterX,
+        directionX,
+        fractionDistanceFromCenterY,
+        directionY,
         ...options,
       });
     }
-  }
-
-  // add text showing sheet number at the top of the sheet.
-  if (sheetLabel) {
-    const fontSize = 8;
-    const sheetLabelX = 2;
-    const sheetLabelY = fontSize - 2;
-    const sheetLabelWidth = 62;
-    const sheetLabelHeight = fontSize;
-
-    outputCtx.fillStyle = "rgba(255,255,255,0.5)";
-    outputCtx.fillRect(0, 0, sheetLabelWidth, sheetLabelHeight);
-
-    outputCtx.fillStyle = "#000000";
-    outputCtx.textBaseline = "middle";
-    outputCtx.textAlign = "left";
-    outputCtx.font = `${fontSize}px Lucida Console`;
-    outputCtx.fillText(sheetLabel, sheetLabelX, sheetLabelY, sheetLabelWidth);
   }
 
   return outputCanvas;
@@ -235,49 +230,43 @@ const drawBlock = ({
   explosionLevel,
   multiplier,
   useRotation,
-  distFromCenter,
-  offsetDirection,
   blockColour,
-  label,
-  pixelType,
   blockSize,
-  showColourOnSheets,
-  includeNumberOnWhite,
-  showAsFinishedPortrait,
-  blockTypeIndex,
+  fractionDistanceFromCenterX,
+  directionX,
+  fractionDistanceFromCenterY,
+  directionY,
 }) => {
   let xPos = left;
   let yPos = top;
   let rotation = 0;
 
-  if (explodeOuterBlocks && distFromCenter.diagonal > 0) {
+  if (explodeOuterBlocks) {
     const rand = Math.random();
     if (useRotation) {
-      rotation = rand * distFromCenter.diagonal;
+      rotation = fractionDistanceFromCenterY * 45;
     }
-    const maxOffset =
-      blockSize * (explosionLevel * (explosionLevel * multiplier));
-    const offsetX = maxOffset * (rand * distFromCenter.diagonal);
-    const offsetY = maxOffset * (rand * distFromCenter.diagonal);
-    xPos += offsetX * offsetDirection.x;
-    yPos += offsetY * offsetDirection.y;
+
+    const maxOffset = blockSize * explosionLevel;
+
+    if (fractionDistanceFromCenterX > 0) {
+      const multiplyBy = fractionDistanceFromCenterX * multiplier;
+      const offsetX = maxOffset * (fractionDistanceFromCenterX * multiplyBy);
+      xPos += offsetX * directionX;
+    }
+
+    if (fractionDistanceFromCenterY > 0) {
+      const multiplyBy = fractionDistanceFromCenterY * multiplier;
+      const offsetY = maxOffset * (fractionDistanceFromCenterY * multiplyBy);
+      yPos += offsetY * directionY;
+    }
   }
 
   outputCtx.save();
   outputCtx.translate(xPos, yPos);
-  outputCtx.rotate(rotation);
+  outputCtx.rotate(rotation * (Math.PI / 180));
 
-  if (pixelType === "symbol") {
-    drawSymbolBlock(outputCtx, blockColour, xPos, yPos, blockSize, {
-      blockTypeIndex,
-      showColourOnSheets,
-      includeNumberOnWhite,
-      showAsFinishedPortrait,
-      label,
-    });
-  } else {
-    drawSquareBlock(outputCtx, blockColour, blockSize);
-  }
+  drawSquareBlock(outputCtx, blockColour, blockSize);
 
   outputCtx.restore();
 };
@@ -465,3 +454,47 @@ export const drawSquareBlock = (ctx, colour, size) => {
   ctx.fillStyle = colour;
   ctx.fillRect(0, 0, size, size);
 };
+
+function getAngleFromOppositeAndAdjacent(opposite, adjacent) {
+  const radians = Math.atan(opposite / adjacent);
+  return radians; // * (180 / Math.PI);
+}
+
+function getAdjacentFromHypotenuseAndAngle(hypotenuse, angle) {
+  // cosine = adjacent / hypotenuse
+  // adjacent = cosine * hypotenuse
+  return Math.cos(angle) * hypotenuse;
+}
+
+function getOppositeFromHypotenuseAndAngle(hypotenuse, angle) {
+  // sine = opposite / hypotenuse
+  // opposite = sine * hypotenuse
+  return Math.sin(angle) * hypotenuse;
+}
+
+function getPtOnCircle(centerPt, radius, pt) {
+  const adjacent = pt.x - centerPt.x;
+  const opposite = pt.y - centerPt.y;
+
+  const angle = getAngleFromOppositeAndAdjacent(opposite, adjacent);
+  const innerAdjacent = getAdjacentFromHypotenuseAndAngle(radius, angle);
+  const innerOpposite = getOppositeFromHypotenuseAndAngle(radius, angle);
+  const x =
+    adjacent <= 0 ? centerPt.x - innerAdjacent : centerPt.x + innerAdjacent;
+  const y =
+    adjacent >= 0 ? centerPt.y + innerOpposite : centerPt.y - innerOpposite;
+
+  return { x, y };
+}
+
+function getDistancesBetweenPoints(pt1, pt2) {
+  const xDist = Math.abs(pt1.x - pt2.x);
+  const yDist = Math.abs(pt1.y - pt2.y);
+  const diagonal = Math.sqrt(xDist * xDist + yDist * yDist);
+
+  return {
+    x: xDist.toFixed(3),
+    y: yDist.toFixed(3),
+    diagonal: diagonal.toFixed(3),
+  };
+}

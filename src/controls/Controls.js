@@ -162,7 +162,7 @@ export default function Controls({ showControls = true, onChange }) {
         multiplier: {
           value: 0.7,
           min: 0.1,
-          max: 1,
+          max: 5,
           onChange: (value) => setQuery({ multiplier: value }),
           render: (get) => get("explosionEffect.explodeOuterBlocks") === true,
         },
