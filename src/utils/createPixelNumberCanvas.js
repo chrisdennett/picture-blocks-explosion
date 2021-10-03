@@ -236,6 +236,7 @@ const drawBlock = ({
   directionX,
   fractionDistanceFromCenterY,
   directionY,
+  useRandom = false,
 }) => {
   let xPos = left;
   let yPos = top;
@@ -244,7 +245,8 @@ const drawBlock = ({
   if (explodeOuterBlocks) {
     const rand = Math.random();
     if (useRotation) {
-      rotation = fractionDistanceFromCenterY * 45;
+      rotation = explosionLevel * fractionDistanceFromCenterY * 45;
+      if (useRandom) rotation *= rand;
     }
 
     const maxOffset = blockSize * explosionLevel;
@@ -262,11 +264,19 @@ const drawBlock = ({
     }
   }
 
+  const halfBlockSize = blockSize / 2;
+
   outputCtx.save();
-  outputCtx.translate(xPos, yPos);
+  outputCtx.translate(xPos + halfBlockSize, yPos + halfBlockSize);
   outputCtx.rotate(rotation * (Math.PI / 180));
 
-  drawSquareBlock(outputCtx, blockColour, blockSize);
+  drawSquareBlock({
+    ctx: outputCtx,
+    colour: blockColour,
+    size: blockSize,
+    x: -halfBlockSize,
+    y: -halfBlockSize,
+  });
 
   outputCtx.restore();
 };
@@ -450,9 +460,9 @@ const underline = (ctx, text, x, y, size, color, thickness, offset) => {
 };
 
 // SQUARE BLOCK
-export const drawSquareBlock = (ctx, colour, size) => {
+export const drawSquareBlock = ({ ctx, colour, size, x, y }) => {
   ctx.fillStyle = colour;
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(x, y, size, size);
 };
 
 function getAngleFromOppositeAndAdjacent(opposite, adjacent) {
