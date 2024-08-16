@@ -56,14 +56,12 @@ const App = () => {
   }, [params]);
 
   // LOAD IN IMAGE
+  // `/images/Dorothy-Wordsworth-transparent-bg-levels.png`,
   useEffect(() => {
-    GetImageFromUrl(
-      `/images/Dorothy-Wordsworth-transparent-bg-levels.png`,
-      (img) => {
-        const src = createMaxSizeCanvas(img);
-        setSourceCanvas(src);
-      }
-    );
+    GetImageFromUrl(`/images/helicopter-no-bg.png`, (img) => {
+      const src = createMaxSizeCanvas(img);
+      setSourceCanvas(src);
+    });
   }, []);
 
   // Create the canvas
